@@ -57,13 +57,14 @@ if [ -d "$DIR" ]; then
 fi
 
 # shellcheck disable=SC2154
-CA_PASSWORD="${configuration_password["ca"]}"
+ROOT_CA_PASSWORD="${configuration_password["ca"]}"
+# shellcheck disable=SC2154
+INTERMEDIATE_CA_PASSWORD="${configuration_password["intermediate"]}"
 # shellcheck disable=SC2154
 SERVER_PASSWORD="${configuration_password["server"]}"
 
 
 mkdir -p "$DIR/CA"
-mkdir -p "$DIR/Server"
 cat <<EOF > "$DIR/CA/root_ca.cnf"
 [ req ]
 default_bits = ${configuration_defaults["key_length"]}
@@ -91,21 +92,39 @@ EOF
 echo "CA    : Generating a key for self-signed Root CA cert:.."
 #openssl genrsa -des3 -passout file:"$DIR/CA/mypass.enc" -out "$DIR/CA/rootCA.key" "${configuration_defaults["key_length"]}"
 # shellcheck disable=SC2154
-if ! openssl genrsa -des3 -passout pass:"$CA_PASSWORD" -out "$DIR/CA/rootCA.key" \
+if ! openssl genrsa -des3 -passout pass:"$ROOT_CA_PASSWORD" -out "$DIR/CA/rootCA.key" \
 "${configuration_defaults["key_length"]}" >> /dev/null 2>&1; then
     echo "CA    : FAILED to generate a key for self-signed Root CA cert:.."
     exit 1
 fi
 
 echo "CA    : Generating a self-signed Root CA certificate"
-if ! openssl req -x509 -sha256 -days "${configuration_ca["cert_valid_days"]}" -new -passin pass:"$CA_PASSWORD" \
+if ! openssl req -x509 -sha256 -days "${configuration_ca["cert_valid_days"]}" -new -passin pass:"$ROOT_CA_PASSWORD" \
 -key "$DIR/CA/rootCA.key" -config "$DIR/CA/root_ca.cnf" -out "$DIR/CA/rootCA.crt" >> /dev/null  2>&1; then
+    echo "CA    : FAILED to generate a self-signed Root CA certificate"
+    exit 1
+fi
+
+
+echo "CA    : Generating a key for self-signed Intermediate CA cert:.."
+#openssl genrsa -des3 -passout file:"$DIR/CA/mypass.enc" -out "$DIR/CA/rootCA.key" "${configuration_defaults["key_length"]}"
+# shellcheck disable=SC2154
+if ! openssl genrsa -des3 -passout pass:"$INTERMEDIATE_CA_PASSWORD" -out "$DIR/CA/intermediateCA.key" \
+"${configuration_defaults["key_length"]}" >> /dev/null 2>&1; then
+    echo "CA    : FAILED to generate a key for self-signed Root CA cert:.."
+    exit 1
+fi
+
+echo "CA    : Generating a self-signed Intermediate CA certificate"
+if ! openssl req -x509 -sha256 -days "${configuration_ca["cert_valid_days"]}" -new -passin pass:"$ROOT_CA_PASSWORD" \
+-key "$DIR/CA/intermediateCA.key" -config "$DIR/CA/root_ca.cnf" -out "$DIR/CA/intermediateCA.crt" >> /dev/null  2>&1; then
     echo "CA    : FAILED to generate a self-signed Root CA certificate"
     exit 1
 fi
 
 rm "$DIR/CA/root_ca.cnf"
 
+mkdir -p "$DIR/Server"
 cat <<EOF > "$DIR/Server/server_csr.cnf"
 [ req ]
 default_bits = ${configuration_defaults["key_length"]}
@@ -167,8 +186,8 @@ DNS.1 = ${configuration_server["hostname"]}
 DNS.2 = ${configuration_server["additional_hostname"]}
 EOF
 
-echo "TLS   : Signing the server CSR with the CA and creating a server cert:"
-if ! openssl x509 -req -CA "$DIR/CA/rootCA.crt" -CAkey "$DIR/CA/rootCA.key" -passin pass:"$CA_PASSWORD" \
+echo "TLS   : Signing the server CSR with the intermediate CA and creating a server cert:"
+if ! openssl x509 -req -CA "$DIR/CA/intermediateCA.crt" -CAkey "$DIR/CA/intermediateCA.key" -passin pass:"$INTERMEDIATE_CA_PASSWORD" \
 -in "$DIR/Server/$SERVER_NAME.csr" -out "$DIR/Server/$SERVER_NAME.crt" -days "${configuration_server["cert_valid_days"]}" \
 -CAcreateserial -extfile "$DIR/Server/server_cert_ext.cnf" >> /dev/null 2>&1; then
     echo "CA    : FAILED to sign the server CSR with the CA and create a server cert"
@@ -178,16 +197,17 @@ rm "$DIR/Server/server_cert_ext.cnf"
 
 echo "PKCS12: Exporting the server cert & key to .pfx file"
 if ! openssl pkcs12 -export -out "$DIR/$SERVER_NAME.pfx" -inkey "$DIR/Server/$SERVER_NAME.key" \
--in "$DIR/Server/$SERVER_NAME.crt" -certfile "$DIR/CA/rootCA.crt" -name "tomcat" \
--passin pass:"$SERVER_PASSWORD" -passout pass:"$SERVER_PASSWORD"; then
+-in "$DIR/Server/$SERVER_NAME.crt" -certfile "$DIR/CA/rootCA.crt" -certfile "$DIR/CA/intermediateCA.crt"  -name "tomcat" \
+-passin pass:"$SERVER_PASSWORD" -passout pass:"$SERVER_PASSWORD" >> /dev/null 2>&1; then
     echo "CA    : FAILED to export the server cert & key to .pfx file"
     exit 1
 fi
 
 
 echo "TRUST : Creating a TrustStore and adding the rootCA"
+# NB - Technically, by trusting the rootCA, we shouldn't need to put the intermediateCA in the chain as long as its sent with the client cert.
 if ! keytool -import -trustcacerts -noprompt -alias ca -ext san=dns:localhost,ip:127.0.0.1 \
--file "$DIR/CA/rootCA.crt" -keystore "$DIR/truststore.jks" -storepass "$SERVER_PASSWORD"  >> /dev/null 2>&1; then
+-file "$DIR/CA/rootCA.crt" -file "$DIR/CA/intermediateCA.crt" -keystore "$DIR/truststore.jks" -storepass "$SERVER_PASSWORD"  >> /dev/null 2>&1; then
     echo "CA    : FAILED to create a TrustStore"
     exit 1
 fi

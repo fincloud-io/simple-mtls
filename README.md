@@ -6,11 +6,14 @@
 
 ## Getting Started
 This script does a number of things to provision a simple self-signed mTLS installation:
-- 1 Creates a self-signed Certification Authority (CA) 
-- 2 Creates a Server certificate, issued by the CA
+- 1 Creates a self-signed Root Certification Authority (CA) 
+- 2 Creates an Intermediate Certification Authority (CA) signed by the Root CA
+- 3 Creates a Server certificate, issued by the Intermediate CA
 
-- 3 Creates client certificates from CSR files
+- 4 Creates client certificates from CSR files
 
+Although a self-signed intermediateCA might be overkill, this is how the larger PKCS systems operate. Should a key get 
+comprimised, or a security issue 
 mTLS authentication requires certificates on both client and server in order to operate. Many small firms dont 
 have a PKCS infrastructure in place, and therefore need to create self-signed certificates using their own 
 Certification Authority (CA) - (also created as part of this process).

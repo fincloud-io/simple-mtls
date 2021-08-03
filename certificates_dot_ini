@@ -7,7 +7,8 @@ OrganisationalUnit = IT Department
 Domain = www.megacorplimited.com
 ShortName = MEGACORP
 email = root@megacorplimited.com
-cert_valid_days = 3650
+root_cert_valid_days = 7300
+intermediate_cert_valid_days = 3650
 
 [server]
 hostname = www.thishostdoesnotexist.com

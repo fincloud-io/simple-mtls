@@ -99,7 +99,7 @@ if ! openssl genrsa -des3 -passout pass:"$ROOT_CA_PASSWORD" -out "$DIR/CA/rootCA
 fi
 
 echo "CA    : Generating a self-signed Root CA certificate"
-if ! openssl req -x509 -sha256 -days "${configuration_ca["cert_valid_days"]}" -new -passin pass:"$ROOT_CA_PASSWORD" \
+if ! openssl req -x509 -sha256 -days "${configuration_ca["root_cert_valid_days"]}" -new -passin pass:"$ROOT_CA_PASSWORD" \
 -key "$DIR/CA/rootCA.key" -config "$DIR/CA/root_ca.cnf" -out "$DIR/CA/rootCA.crt" >> /dev/null  2>&1; then
     echo "CA    : FAILED to generate a self-signed Root CA certificate"
     exit 1
@@ -116,7 +116,7 @@ if ! openssl genrsa -des3 -passout pass:"$INTERMEDIATE_CA_PASSWORD" -out "$DIR/C
 fi
 
 echo "CA    : Generating a self-signed Intermediate CA certificate"
-if ! openssl req -x509 -sha256 -days "${configuration_ca["cert_valid_days"]}" -new -passin pass:"$ROOT_CA_PASSWORD" \
+if ! openssl req -x509 -sha256 -days "${configuration_ca["intermediate_cert_valid_days"]}" -new -passin pass:"$ROOT_CA_PASSWORD" \
 -key "$DIR/CA/intermediateCA.key" -config "$DIR/CA/root_ca.cnf" -out "$DIR/CA/intermediateCA.crt" >> /dev/null  2>&1; then
     echo "CA    : FAILED to generate a self-signed Root CA certificate"
     exit 1

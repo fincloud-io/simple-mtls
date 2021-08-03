@@ -54,12 +54,14 @@ The client certificate can be found in the client subdirectory, with the name ``
 ## Troubleshooting
 
 ### I keep getting errors like this ```declare: usage: declare [-afFirtx] [-p] [name[=value] ...]```
-Upgrade your version of BASH - OSX in particular comes installed with version 3.2.
+Upgrade your version of BASH - OSX in particular comes installed with a very old version unlikely to be upgraded.
+
 ```brew install bash``` 
-This doesn't replace the 3.2 version of bash, so won't affect other scripts. New bash will be installed in /usr/local/bin. 
+
+Note, this doesn't replace the pre-installed version of bash, so won't affect other scripts. New bash will be installed in /usr/local/bin. 
 see article [Upgrading bash on OSX](https://itnext.io/upgrading-bash-on-macos-7138bd1066ba)
 
 Thanks to [Sleepless Beastie](https://sleeplessbeastie.eu/2019/11/11/how-to-parse-ini-configuration-file-using-bash/) for the helpful ini parsing code 
 
 - - - - - -  
-[Jon Jenkins](mailto://jj@fincloud.io) 01/08/2021
+[Jon Jenkins](mailto:jj@fincloud.io) 01/08/2021

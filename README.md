@@ -13,8 +13,10 @@ This script does a number of things to provision a simple self-signed mTLS insta
 - 4 Creates client certificates from CSR files
 
 Although a self-signed intermediateCA might be overkill, this is how the larger PKCS systems operate. Should a key get 
-comprimised, or a security issue 
-mTLS authentication requires certificates on both client and server in order to operate. Many small firms dont 
+compromised, or a security issue with a root certificate arise, just the intermediateCA and all child certificates need 
+to be re-issued (rather than everything back to the root level).
+
+mTLS authentication requires certificates on both client and server in order to operate. Many small firms don't 
 have a PKCS infrastructure in place, and therefore need to create self-signed certificates using their own 
 Certification Authority (CA) - (also created as part of this process).
 

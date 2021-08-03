@@ -1,0 +1,25 @@
+[ca]
+CountryCode = GB
+State = England
+Locality = London
+OrganisationName = Megacorp LTD
+OrganisationalUnit = IT Department
+Domain = www.megacorplimited.com
+ShortName = MEGACORP
+email = root@megacorplimited.com
+cert_valid_days = 3650
+
+[server]
+hostname = www.thishostdoesnotexist.com
+additional_hostname = localhost
+cert_valid_days = 730
+
+[client]
+cert_valid_days = 730
+
+[password]
+ca = DEFAULT
+server = DEFAULT
+
+[defaults]
+key_length = 4096

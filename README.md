@@ -53,7 +53,9 @@ The client certificate can be found in the client subdirectory, with the name ``
 
 ## Troubleshooting
 
-### I keep getting errors like this ```declare: usage: declare [-afFirtx] [-p] [name[=value] ...]```
+### I keep getting errors like this 
+```declare: usage: declare [-afFirtx] [-p] [name[=value] ...]```
+
 Upgrade your version of BASH - OSX in particular comes installed with a very old version unlikely to be upgraded.
 
 ```brew install bash``` 
